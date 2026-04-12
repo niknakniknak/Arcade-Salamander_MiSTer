@@ -386,18 +386,6 @@ end
 //////  MIXER
 ////
 
-///////////////////////////////////////////////////////////
-//////  VOLUME SCALING
-////
-
-// Each OSD knob is 3-bit (0-7). We scale each source by its knob value.
-// Base multipliers preserve the original author's intended relative balance:
-//   YM2151  : x1  per step  (full range 0..7)
-//   VLM5030 : x6  per step  (matches original *45 at step 7: 7*6=42, close to 45)
-//   K007232 : x1  per step  (matches original *2 at default step 2)
-// All intermediate math uses wider types to avoid overflow before the final
-// 16-bit clamp back into o_SND_L/R.
-
 wire signed [24:0] ym_r_scaled  = ($signed(ymfm_r)   * 25'd90) >>> 3;
 wire signed [24:0] ym_l_scaled  = ($signed(ymfm_l)   * 25'd90) >>> 3;
 wire signed [24:0] vlm_scaled   = ($signed({vlm_snd, 7'd0}) * 25'd45) >>> 3;
