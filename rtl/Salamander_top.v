@@ -23,6 +23,7 @@ module Salamander_top (
     //user inputs
     input   wire    [7:0]   i_IN0, i_IN1, i_IN2, i_DIPSW1, i_DIPSW2,
 
+
     //SDRAM requests
     output  wire    [16:0]  o_EMU_DATAROM_ADDR,
     input   wire    [15:0]  i_EMU_DATAROM_DATA,
