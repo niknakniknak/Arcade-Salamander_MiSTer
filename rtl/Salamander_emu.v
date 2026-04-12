@@ -22,6 +22,7 @@ module Salamander_emu (
     input   wire    [15:0]  i_JOYSTICK0,
     input   wire    [15:0]  i_JOYSTICK1,
 
+
     //mister ioctl
     input   wire    [15:0]  ioctl_index,
     input   wire            ioctl_download,
@@ -485,6 +486,7 @@ Salamander_top gameboard_top (
     .i_IN0                      (IN0                        ),
     .i_IN1                      (IN1                        ),
     .i_IN2                      (IN2                        ),
+
     .i_DIPSW1                   (DIPSW1                     ),
     .i_DIPSW2                   (DIPSW2                     ),
 
