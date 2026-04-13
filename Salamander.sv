@@ -216,12 +216,7 @@ pll pll(
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X  XXX X  X  BBBCCCDDDN        X
-//                      ||||||||
-//                      |||++++-- VOL_K007232 [19:17]
-//                      ||+------ VOL_VLM5030 [16:14]
-//                      |+------- VOL_YM2151  [13:11]
-//                      +-------- (N=unused)
+// X  XXX X  XX           X
 
 wire    [127:0] status; //status bits
 
@@ -235,6 +230,11 @@ localparam CONF_STR = {
 
     "P1OA,VGA Scaler,off,on;",
     "P1O35,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+
+	"-;",
+    "P2,Audio;",
+    "P2-;",
+    "P2OB,JAMMA Mono,off,on;",
 
     "-;",
     "DIP;",
@@ -271,7 +271,7 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 
     .buttons                    (buttons                    ),
     .status                     (status                     ),
-    .status_in                  (128'h418B800               ),  // YM2151=5, VLM5030=6, K007232=2
+    .status_in                  (128'h0                     ),
 
     .status_menumask            ({16'd0}                    ),
     .direct_video               (direct_video               ),
@@ -309,14 +309,13 @@ wire            master_reset = RESET | status[0] | buttons[1];
 
 wire            flip = status[23];
 
-// Audio volume controls from OSD (4-bit each)
+// Audio volumes (4-bit)
 	wire [3:0] vol_ym2151  = status[14:11];
     wire [3:0] vol_vlm5030 = status[18:15];
     wire [3:0] vol_k007232 = status[22:19];
-    wire [3:0] vol_master  = status[26:23];
-
+    wire [3:0] vol_master  = status[26:23]; 
 assign          AUDIO_S = 1'b1;
-assign          AUDIO_MIX = 2'd0;
+assign          AUDIO_MIX = status[11] ? 2'd3 : 2'd0;
 
 Salamander_emu gameboard_top (
     .i_EMU_MCLK                 (CLK72M                     ),
@@ -340,7 +339,6 @@ Salamander_emu gameboard_top (
 
     .i_JOYSTICK0                (joystick_0                 ),
     .i_JOYSTICK1                (joystick_1                 ),
-
 
     .ioctl_index                (ioctl_index                ),
     .ioctl_download             (ioctl_download             ),
