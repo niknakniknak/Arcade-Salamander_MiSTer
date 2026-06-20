@@ -224,9 +224,11 @@ wire    [127:0] status; //status bits
 localparam CONF_STR = {
     "Salamander;",
     "-;",
+    "O9,Player 1 Ship,Vic Viper,Lord British;",
+    "-;",
     "P1,Scaler Settings;",
     "P1-;",
-    "P1O7,Aspect ratio,original,full screen;",
+    "P1O78,Aspect ratio,Pixel Aspect,Original,Full Screen;",
 
     "P1OA,VGA Scaler,off,on;",
     "P1O35,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
@@ -317,6 +319,14 @@ wire            flip = status[23];
 assign          AUDIO_S = 1'b1;
 assign          AUDIO_MIX = status[11] ? 2'd3 : 2'd0;
 
+wire            ship_sides_swap = status[9];
+
+// Left controller always = i_JOYSTICK0 = whichever ship the menu currently
+// has assigned to the Left side; Right controller always = i_JOYSTICK1.
+// Default (ship_sides_swap=0): Left=Vic Viper, Right=Lord British.
+wire    [15:0]  joystick_left  = ship_sides_swap ? joystick_1 : joystick_0;
+wire    [15:0]  joystick_right = ship_sides_swap ? joystick_0 : joystick_1;
+
 Salamander_emu gameboard_top (
     .i_EMU_MCLK                 (CLK72M                     ),
 	.i_EMU_SCLK                 (CLK57M                     ),
@@ -337,8 +347,8 @@ Salamander_emu gameboard_top (
     .o_SND_L                    (AUDIO_L                    ),
     .o_SND_R                    (AUDIO_R                    ),
 
-    .i_JOYSTICK0                (joystick_0                 ),
-    .i_JOYSTICK1                (joystick_1                 ),
+    .i_JOYSTICK0                (joystick_left              ),
+    .i_JOYSTICK1                (joystick_right             ),
 
     .ioctl_index                (ioctl_index                ),
     .ioctl_download             (ioctl_download             ),
@@ -374,9 +384,11 @@ assign HDMI_FREEZE = 0;
 assign HDMI_BLACKOUT = 0;
 //assign FB_FORCE_BLANK = 0;
 
-//                   eval dv-----------|  eval fs----------| h---|
-assign VIDEO_ARX = direct_video ? 8'd4 : status[7] ? 8'd16 : 8'd4;
-assign VIDEO_ARY = direct_video ? 8'd3 : status[7] ? 8'd9  : 8'd3;
+wire    [1:0]   ar = status[8:7];
+
+//                   eval dv-----------|  eval ar==0 (Pixel Aspect 8:7)|  eval ar==1 (Original 4:3)-----|  ar==2 (Full Screen 16:9)
+assign VIDEO_ARX = direct_video ? 8'd4 : (ar == 0) ? 8'd8 : (ar == 1) ? 8'd4 : 8'd16;
+assign VIDEO_ARY = direct_video ? 8'd3 : (ar == 0) ? 8'd7 : (ar == 1) ? 8'd3 : 8'd9;
 
 arcade_video #(256,24) arcade_video (
     .clk_video                  (CLK72M                     ),
