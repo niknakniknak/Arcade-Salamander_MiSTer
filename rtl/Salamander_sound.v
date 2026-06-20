@@ -386,11 +386,16 @@ end
 //////  MIXER
 ////
 
-always @(posedge mclk) begin
-    o_SND_R <= ymfm_r + (vlm_snd * 6'sd45) + (pcm_mixed * 6'sd2);
-    o_SND_L <= ymfm_l + (vlm_snd * 6'sd45) + (pcm_mixed * 6'sd2);
-end
+wire signed [24:0] ym_r_scaled  = ($signed(ymfm_r)   * 25'd90) >>> 3;
+wire signed [24:0] ym_l_scaled  = ($signed(ymfm_l)   * 25'd90) >>> 3;
+wire signed [24:0] vlm_scaled   = ($signed({vlm_snd, 7'd0}) * 25'd45) >>> 3;
+wire signed [24:0] pcm_r_scaled = ($signed({pcm_mixed, 3'd0}) * 25'd30) >>> 3;
+wire signed [24:0] pcm_l_scaled = ($signed({pcm_mixed, 3'd0}) * 25'd30) >>> 3;
 
+always @(posedge mclk) begin
+    o_SND_R <= ym_r_scaled[18:3] + vlm_scaled[18:3] + pcm_r_scaled[18:3];
+    o_SND_L <= ym_l_scaled[18:3] + vlm_scaled[18:3] + pcm_r_scaled[18:3];
+end
 
 
 ///////////////////////////////////////////////////////////
