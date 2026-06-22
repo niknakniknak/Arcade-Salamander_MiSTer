@@ -479,7 +479,7 @@ wire            y_offscreen = (buffer_ypos_counter[7:4] == 4'hF) ? 1'b1 : 1'b0; 
 // zoom factor == $000  (LATCH_A[7:6] = zoom MSBs, LATCH_B = zoom LSBs)
 wire            end_of_tileline = tileline0_complete | x_offscreen | y_offscreen;
 wire            end_of_hline = hline_complete | x_offscreen | y_offscreen;
-wire            end_of_last_hline_n = ~(~(vtile_complete_n) | y_offscreen | y_offscreen);
+wire            end_of_last_hline_n = ~(~(vtile_complete_n) | y_offscreen);
 
 
 
