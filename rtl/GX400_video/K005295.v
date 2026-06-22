@@ -475,13 +475,11 @@ end
 wire            evenbuffer_xpos_d7 = evenbuffer_xpos_counter[7];
 
 wire            x_offscreen = ~(~oddbuffer_xpos_counter[7] | oddbuffer_xpos_counter[6]); //0-255 or 384-511
-wire            y_offscreen = (buffer_ypos_counter == 8'd255) ? 1'b1 : 1'b0;
+wire            y_offscreen = (buffer_ypos_counter[7:4] == 4'hF) ? 1'b1 : 1'b0; // Eicar: real hw clip sprites on ypos counter >= 0xf0. This has been confirmed by running test ROM on real hw.
 // zoom factor == $000  (LATCH_A[7:6] = zoom MSBs, LATCH_B = zoom LSBs)
-wire 			zoom_zero = (LATCH_A[7:6] == 2'b00) && (LATCH_B == 8'h00);
-wire 			end_of_tileline     =  tileline0_complete | x_offscreen | zoom_zero;
-wire 			end_of_hline        =  hline_complete     | x_offscreen | zoom_zero;
-wire 			end_of_last_hline_n = ~(~vtile_complete_n | y_offscreen | zoom_zero);
-
+wire            end_of_tileline = tileline0_complete | x_offscreen | y_offscreen;
+wire            end_of_hline = hline_complete | x_offscreen | y_offscreen;
+wire            end_of_last_hline_n = ~(~(vtile_complete_n) | y_offscreen | y_offscreen);
 
 
 
