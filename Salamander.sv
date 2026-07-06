@@ -216,7 +216,7 @@ pll pll(
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X  XXX X  X            X
+// X  XXX X  XX           X
 
 wire    [127:0] status; //status bits
 
@@ -232,6 +232,11 @@ localparam CONF_STR = {
 
     "P1OA,VGA Scaler,off,on;",
     "P1O35,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+
+	"-;",
+    "P2,Audio;",
+    "P2-;",
+    "P2OB,Jamma mono out,off,on;",
 
     "-;",
     "DIP;",
@@ -305,9 +310,13 @@ wire            vcen;
 wire            master_reset = RESET | status[0] | buttons[1];
 
 wire            flip = status[23];
-
+// Audio volumes (4-bit)
+	wire [3:0] vol_ym2151  = status[14:11];
+    wire [3:0] vol_vlm5030 = status[18:15];
+    wire [3:0] vol_k007232 = status[22:19];
+    wire [3:0] vol_master  = status[26:23]; 
 assign          AUDIO_S = 1'b1;
-assign          AUDIO_MIX = 2'd0;
+assign          AUDIO_MIX = status[11] ? 2'd3 : 2'd0;
 wire            ship_sides_swap = status[9];
 
 // Left controller always = i_JOYSTICK0 = whichever ship the menu currently
