@@ -224,6 +224,8 @@ wire    [127:0] status; //status bits
 localparam CONF_STR = {
     "Salamander;",
     "-;",
+	"O9,Player 1 Ship,Vic Viper,Lord British;",
+    "-;",
     "P1,Scaler Settings;",
     "P1-;",
     "P1O7,Aspect ratio,original,full screen;",
@@ -315,6 +317,13 @@ wire            flip = status[23];
     wire [3:0] vol_master  = status[26:23]; 
 assign          AUDIO_S = 1'b1;
 assign          AUDIO_MIX = status[11] ? 2'd3 : 2'd0;
+wire            ship_sides_swap = status[9];
+
+// Left controller always = i_JOYSTICK0 = whichever ship the menu currently
+// has assigned to the Left side; Right controller always = i_JOYSTICK1.
+// Default (ship_sides_swap=0): Left=Vic Viper, Right=Lord British.
+wire    [15:0]  joystick_left  = ship_sides_swap ? joystick_1 : joystick_0;
+wire    [15:0]  joystick_right = ship_sides_swap ? joystick_0 : joystick_1;
 
 Salamander_emu gameboard_top (
     .i_EMU_MCLK                 (CLK72M                     ),
@@ -336,9 +345,9 @@ Salamander_emu gameboard_top (
     .o_SND_L                    (AUDIO_L                    ),
     .o_SND_R                    (AUDIO_R                    ),
 
-    .i_JOYSTICK0                (joystick_0                 ),
-    .i_JOYSTICK1                (joystick_1                 ),
-
+    .i_JOYSTICK0                (joystick_left              ),
+    .i_JOYSTICK1                (joystick_right             ),
+	
     .ioctl_index                (ioctl_index                ),
     .ioctl_download             (ioctl_download             ),
     .ioctl_addr                 (ioctl_addr                 ),

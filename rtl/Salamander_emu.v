@@ -427,8 +427,17 @@ jtframe_rom_2slots #(
 wire    [7:0]   IN0, IN1, IN2;
 
 //System control
-assign          IN0[0]  = i_JOYSTICK0[5]; //p1 coin
-assign          IN0[1]  = i_JOYSTICK1[5]; //p2 coin
+// DIPSW2[2]: 1 = 1 coin slot, 0 = 2 coin slots.
+// Real 1-slot cabinets have only one coin mech, wired to the P1 coin input;
+// P2's coin input simply doesn't exist on that cabinet wiring. On MiSTer
+// both players have their own pad, so in 1-slot mode let either player's
+// coin button register, instead of only whichever pad happens to be mapped
+// to the P1 connector. 2-slot mode is untouched - each coin input stays
+// independent, exactly as before.
+wire            coin_in_1slot = i_JOYSTICK0[5] | i_JOYSTICK1[5];
+
+assign          IN0[0]  = DIPSW2[2] ? coin_in_1slot : i_JOYSTICK0[5]; //p1/shared coin
+assign          IN0[1]  = i_JOYSTICK1[5]; //p2 coin (only read by the game in 2-slot mode)
 assign          IN0[2]  = i_JOYSTICK0[4]; //service
 assign          IN0[3]  = i_JOYSTICK0[6]; //p1 start
 assign          IN0[4]  = i_JOYSTICK1[6]; //p2 start
