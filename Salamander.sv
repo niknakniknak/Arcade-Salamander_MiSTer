@@ -303,7 +303,11 @@ wire            vcen;
 wire            master_reset = RESET | status[0] | buttons[1];
 
 wire            flip = status[23];
-
+// Audio volumes (4-bit)
+	wire [3:0] vol_ym2151  = status[14:11];
+    wire [3:0] vol_vlm5030 = status[18:15];
+    wire [3:0] vol_k007232 = status[22:19];
+    wire [3:0] vol_master  = status[26:23]; 
 assign          AUDIO_S = 1'b1;
 assign          AUDIO_MIX = 2'd0;
 
