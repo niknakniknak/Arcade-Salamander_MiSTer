@@ -386,11 +386,45 @@ end
 //////  MIXER
 ////
 
-wire signed [24:0] ym_r_scaled  = ($signed(ymfm_r)   * 25'd90) >>> 3;
-wire signed [24:0] ym_l_scaled  = ($signed(ymfm_l)   * 25'd90) >>> 3;
-wire signed [24:0] vlm_scaled   = ($signed({vlm_snd, 7'd0}) * 25'd45) >>> 3;
-wire signed [24:0] pcm_r_scaled = ($signed({pcm_mixed, 3'd0}) * 25'd30) >>> 3;
-wire signed [24:0] pcm_l_scaled = ($signed({pcm_mixed, 3'd0}) * 25'd30) >>> 3;
+//GX587 output filters, sheet 2/2
+//FM  C44 33n sees R82 1K || (R83 1K + R14 1K)   = 667R  ->  7.2kHz
+//PCM C28 470p sees (ladder 100K + R51 20K) || R39/R40 23K5 = 19K65 -> 17.2kHz
+wire signed [15:0] ymfm_r_lpf, ymfm_l_lpf, pcm_lpf;
+//VLM C39 0.1u / R62 4.7K = 339Hz high pass, then R60 10K / C37 47n = 339Hz low pass
+//third pole R59 10K / C38 330p is 48kHz, above the output rate, omitted
+wire signed [15:0] vlm_ext = $signed({vlm_snd, 5'd0}); //concat is unsigned, $signed keeps the sign
+wire signed [15:0] vlm_dc, vlm_lpf;
+wire signed [15:0] vlm_hp  = vlm_ext - vlm_dc;
+
+Salamander_lpf #(.COEF(16'd39)) u_lpf_vlm_dc (
+    .i_EMU_MCLK (mclk), .i_EMU_CEN (clk3m58_pcen), .i_RST_n (~sndcpu_rst),
+    .i_SND (vlm_ext), .o_SND (vlm_dc) );
+
+Salamander_lpf #(.COEF(16'd39)) u_lpf_vlm (
+    .i_EMU_MCLK (mclk), .i_EMU_CEN (clk3m58_pcen), .i_RST_n (~sndcpu_rst),
+    .i_SND (vlm_hp), .o_SND (vlm_lpf) );
+
+
+Salamander_lpf #(.COEF(16'd827)) u_lpf_ym_r (
+    .i_EMU_MCLK (mclk), .i_EMU_CEN (clk3m58_pcen), .i_RST_n (~sndcpu_rst),
+    .i_SND (ymfm_r), .o_SND (ymfm_r_lpf) );
+
+Salamander_lpf #(.COEF(16'd827)) u_lpf_ym_l (
+    .i_EMU_MCLK (mclk), .i_EMU_CEN (clk3m58_pcen), .i_RST_n (~sndcpu_rst),
+    .i_SND (ymfm_l), .o_SND (ymfm_l_lpf) );
+
+Salamander_lpf #(.COEF(16'd1953)) u_lpf_pcm (
+    .i_EMU_MCLK (mclk), .i_EMU_CEN (clk3m58_pcen), .i_RST_n (~sndcpu_rst),
+    .i_SND (pcm_mixed), .o_SND (pcm_lpf) );
+
+wire signed [24:0] ym_r_scaled  = ($signed(ymfm_r_lpf) * 25'd90) >>> 3;
+wire signed [24:0] ym_l_scaled  = ($signed(ymfm_l_lpf) * 25'd90) >>> 3;
+//x2.9 makes up the band-pass insertion loss (RMS 9dB over 300-3000Hz), so the
+//filter changes tone and not level: 45 was tuned by ear against an already-
+//filtered PCB, applying the filter here would otherwise count it twice
+wire signed [24:0] vlm_scaled   = ($signed(vlm_lpf) * 25'd130) >>> 1;
+wire signed [24:0] pcm_r_scaled = ($signed({pcm_lpf, 3'd0}) * 25'd30) >>> 3;
+wire signed [24:0] pcm_l_scaled = ($signed({pcm_lpf, 3'd0}) * 25'd30) >>> 3;
 
 always @(posedge mclk) begin
     o_SND_R <= ym_r_scaled[18:3] + vlm_scaled[18:3] + pcm_r_scaled[18:3];
